@@ -53,7 +53,7 @@
 
   \begin{abstract}
 It is common for search and optimization problems to have alternative equivalent encodings in ASP. 
-Which of these encodings lend itself best to ASP solvers is 
+Which of these encodings lends itself best to ASP solvers is 
 difficult to answer as typically no encoding is uniformly better 
 than others when evaluated on broad classes of problem instances.
 We posit that one can improve the solving ability of ASP by using machine 
@@ -91,15 +91,17 @@ These tools have been shown to be especially effective on search and
 optimization problems whose decision versions are in the class NP, including 
 many problems of practical interest \cite{GebserMR17,ErdemGL16}. 
 
-Despite the ease of modeling and demonstrated potential of ASP, using it is 
+Despite the ease of modeling and the demonstrated potential of ASP, using it is 
 not without challenges. First, it is unlikely a single solver will emerge
 that would uniformly outperform all others. Second, solvers commonly come
 with tens, even hundreds, of parameters. The ability to choose the right 
 solver and the right parameter configuration on the \emph{per-instance} 
 basis may then be the difference between solving a problem within an acceptable 
-time bound or having a solver (even an excellent one) run ``forever.'' This 
-issue has long been recognized by the research community and solver selection, 
-portfolio solving and automated parameter configuration have all been 
+time bound or having a solver (even an excellent one) run ``forever.'' 
+%This issue has long been recognized by the research community. 
+Consequently, 
+solver selection, portfolio solving, and automated parameter configuration 
+have all been 
 extensively studied in ASP \cite{MarateaPR14,HoosLS14}, as well as 
 in other fields \cite{Rice76,KerschkeHNT19}. The key idea is to learn
 instance-driven performance models and use them, given an instance, to
@@ -137,16 +139,16 @@ selection as a technique of improving ASP potential to solve hard problems.
 \section{Encoding Candidates for the HC Problem}
 %
 The HC problem takes directed graphs as input instances. An instance is given 
-by the lists of nodes and edges(links), represented as ground atoms over a unary 
-predicate $\tt{node}$ and a binary predicate $\tt{link}$. Figure~\ref{graphinstance} shows
-an example instance, a directed graph with four nodes and six links.
+by the lists of nodes and edges, represented as ground atoms over a unary 
+predicate $\tt{node}$ and a binary predicate $\tt{edge}$. Figure~\ref{graphinstance} shows
+an example instance, a directed graph with four nodes and six edges.
 
 \begin{figure}
 \figrule
 \begin{center}
 \begin{verbatim}
 node(1..4).
-link(1,2).link(1,3).link(2,1).link(3,4).link(4,2),link(4,3).
+edge(1,2). edge(1,3). edge(2,1). edge(3,4). edge(4,2). edge(4,3).
 \end{verbatim}
 \end{center}
 \caption{Example of a graph instance}\label{graphinstance}
@@ -164,12 +166,12 @@ rules shown in Figure~\ref{reachencod}.
 \begin{center}
 \begin{verbatim}
 %Select edges
-{ hpath(X,Y) : link(X,Y) }=1:-node(X).
-{ hpath(X,Y) : link(X,Y) }=1:-node(Y).
+{ hcyc(X,Y) : edge(X,Y) }=1:-node(X).
+{ hcyc(X,Y) : edge(X,Y) }=1:-node(Y).
 
 %Define reachability
-reach(X,Y):- hpath(X,Y).
-reach(X,Z) :- reach(X,Y),hpath(Y,Z).
+reach(X,Y):- hcyc(X,Y).
+reach(X,Z) :- reach(X,Y),hcyc(Y,Z).
 
 %Enforce reachability
 :- not reach(X,Y),node(X),node(Y).
@@ -188,20 +190,20 @@ every node is reachable from every other node by means of selected edges only.
 
 Reachability can be modeled in a different way by selecting a node, say 1, and
 requiring that every node in the graph (including 1) is reachable from 1 by a 
-non-trivial path (at least one edge) of selected edges. Thus, an alternative 
-encoding of the HC problem might look as in Figure~\ref{reachencod2}.  
+non-trivial path (at least one edge) of selected edges. This leads to an 
+alternative encoding of the HC problem shown in Figure~\ref{reachencod2}.  
 
 \begin{figure}
 \figrule
 \begin{center}
 \begin{verbatim}
 %Select edges
-{ hpath(X,Y) : link(X,Y) }=1:-node(X).
-{ hpath(X,Y) : link(X,Y) }=1:-node(Y).
+{ hcyc(X,Y) : edge(X,Y) }=1:-node(X).
+{ hcyc(X,Y) : edge(X,Y) }=1:-node(Y).
 
 %Define reachability from 1
-reach(X):- hpath(1,X).
-reach(Y) :- reach(X),hpath(X,Y).
+reach(X):- hcyc(1,X).
+reach(Y) :- reach(X),hcyc(X,Y).
 
 %Enforce reachability from 1
 :- not reach(X),node(X).
@@ -229,9 +231,9 @@ be used together.
 \figrule
 \begin{center}
 \begin{verbatim}
-{ hpath(X,Y): link(X,Y) }:-node(X).
-:- 2{ hpath(X,Y)}, node(X).
-:- { hpath(X,Y) }0, node(X).
+{ hcyc(X,Y): edge(X,Y) }:-node(X).
+:- 2{ hcyc(X,Y)}, node(X).
+:- { hcyc(X,Y) }0, node(X).
 \end{verbatim}
 \end{center}
 \caption{Selecting edges by allowing any edge to be selected and constraining
@@ -267,8 +269,8 @@ selection methods to improve the performance of ASP on the HC problem.
 	\begin{tabular}{llll}
 		\hline \hline
 		Encoding & Solved Percentage\% & Average Solved Runtime & Number of Wins\\
-		Encoding 1     & 82.3             & 84.1              & 102                 \\
-		Encoding 2     & 71.8            & 46.6             & 126                 \\
+		Encoding 1     & 82.3             & 84.13              & 102                 \\
+		Encoding 2     & 71.8            & 46.60             & 126                 \\
 		Encoding 3     & 55.3             & 29.7              & 110                 \\
 		Encoding 4     & 76.2             & 42.9              & 155                 \\
 		Encoding 5     & 55.4             & 31.9              & 120                 \\
@@ -348,7 +350,8 @@ We see that instances are very often either solved in under 50s or they time
 out. Only a small fraction falls into the desired performance range. Thus,
 several trials are typically needed to generate a single reasonably hard 
 instance. We continued the process until we built a collection of 784 
-reasonably hard instances.\footnote{The graph instances and the performance data can be downloaded from \url{http://cs.uky.edu/~lli259/encodingselection}}
+reasonably hard instances.\footnote{The graphs and the performance data we 
+collected can be downloaded from \url{http://cs.uky.edu/~lli259/encodingselection}}
 \begin{figure}
 \centering
 \begin{subfigure}
@@ -505,20 +508,20 @@ features. Our result shows that clapsre dynamic features are not as informative 
 \programmath
 	\begin{tabular}{lll}
 		\hline\hline
-ratio\_node\_edge                 & avg\_depth\_beam              & Frac\_Binary\_Rules\_hc2          \\
-ratio\_bi\_edge                   & dfs\_1st\_back\_depth         & Frac\_Ternary\_Rules\_hc2         \\
-avg\_out\_degree                  & sum\_of\_choices\_along\_path & Free\_Problem\_Variables\_hc2     \\
-avg\_in\_degree                   & depth\_avg\_dfs\_backjump.    & Problem\_Variables\_hc2           \\
-ratio\_of\_odd\_out\_degree       & depth\_back\_to\_root         & Assigned\_Problem\_Variables\_hc2 \\
-ratio\_of\_even\_out\_degree      & depth\_back\_to\_any          & Constraints\_hc2                  \\
-ratio\_of\_odd\_in\_degree        & depth\_one\_path              & Rules\_hc2                        \\
-ratio\_of\_even\_in\_degree       & min\_depth\_bfs               & Frac\_Normal\_Rules\_hc2          \\
-ratio\_of\_odd\_degree            & max\_depth\_bfs               & Frac\_Cardinality\_Rules\_hc2     \\
-ratio\_of\_even\_degree           & avg\_depth\_bfs               & Frac\_Choice\_Rules\_hc2          \\
-ratio\_out\_degree\_less\_than\_3 & min\_depth\_beam              & Frac\_Weight\_Rules\_hc2          \\
-ratio\_in\_degree\_less\_than\_3  & max\_depth\_beam              & Frac\_Binary\_Constraints\_hc2    \\
-ratio\_degree\_less\_than\_3      & avg\_depth\_beam              & Frac\_Ternary\_Constraints\_hc2   \\
-avg\_depth\_bfs                   & Frac\_Unary\_Rules\_hc2      & Frac\_Other\_Constraints\_hc2  \\
+ratio\_node\_edge                 & avg\_depth\_beam              & Frac\_Binary\_Rules\_Enc2          \\
+ratio\_bi\_edge                   & dfs\_1st\_back\_depth         & Frac\_Ternary\_Rules\_Enc2         \\
+avg\_out\_degree                  & sum\_of\_choices\_along\_path & Free\_Problem\_Variables\_Enc2     \\
+avg\_in\_degree                   & depth\_avg\_dfs\_backjump.    & Problem\_Variables\_Enc2           \\
+ratio\_of\_odd\_out\_degree       & depth\_back\_to\_root         & Assigned\_Problem\_Variables\_Enc2 \\
+ratio\_of\_even\_out\_degree      & depth\_back\_to\_any          & Constraints\_Enc2                  \\
+ratio\_of\_odd\_in\_degree        & depth\_one\_path              & Rules\_Enc2                        \\
+ratio\_of\_even\_in\_degree       & min\_depth\_bfs               & Frac\_Normal\_Rules\_Enc2          \\
+ratio\_of\_odd\_degree            & max\_depth\_bfs               & Frac\_Cardinality\_Rules\_Enc2     \\
+ratio\_of\_even\_degree           & avg\_depth\_bfs               & Frac\_Choice\_Rules\_Enc2          \\
+ratio\_out\_degree\_less\_than\_3 & min\_depth\_beam              & Frac\_Weight\_Rules\_Enc2          \\
+ratio\_in\_degree\_less\_than\_3  & max\_depth\_beam              & Frac\_Binary\_Constraints\_Enc2    \\
+ratio\_degree\_less\_than\_3      & avg\_depth\_beam              & Frac\_Ternary\_Constraints\_Enc2   \\
+avg\_depth\_bfs                   & Frac\_Unary\_Rules\_Enc2      & Frac\_Other\_Constraints\_Enc2  \\
 \hline\hline
 	\end{tabular}
 \programmath
@@ -623,7 +626,7 @@ encoding rather than the best one.
 \begin{tabular}{llll}
 \hline\hline
 %
-                  & Solved Percentage\% & Average Solved Runtime & Number of Wins \\ \hline%
+                  & Solved Percentage\% & Average Solved Runtime & Appearances As Best \\ \hline%
 Single encoding performance & & &                                     \\ %
 Encoding 1        & 84.0           & 82.4                      & 25            \\ %
 Encoding 2        & 71.2           & 44.0                      & 29            \\ %
@@ -664,7 +667,7 @@ the decision-tree predictor is a very close second.
 	\begin{tabular}{llll}
 		\hline\hline
 		%
-		& Solved Percentage\% & Average Solved Runtime & Number of Wins \\ \hline%
+		& Solved Percentage\% & Average Solved Runtime & Appearances As Best \\ \hline%
 		Single encoding performance & & &                                     \\ %
 		Encoding 1        & 81.4&86.7                      & 18            \\ %
 		Encoding 2        & 75.0 & 49.7                      & 24            \\ %
@@ -732,238 +735,194 @@ an encoding and rewrite it into several equivalent and efficient forms.
 
 \section*{Acknowledgements}
 This work was funded by the NSF under the grant IIS-1707371.
+
+\bibliography{refs2}
+
 \newpage
-\begin{appendices}
-\section{Encoding candidates}
-In this appendix, we provide the six encoding candidates used in our experiments.
+\section*{Appendix A: Encodings}
+We describe below the six encodings of the HC problems used in our 
+experiments. All of our encodings use the notion of reachability from
+node 1 as specified in Figure \ref{reachencod2}.\footnote{The constraint 
+requiring every node is reachable from every other node, as in Figure 
+\ref{reachencod}, has a larger grounding size and is in general inferior.}
+They differ only in the way we select edges and constrain the numbers of
+selected edges that leave and enter a node. Therefore, the figures below 
+list only the rules in the ``select-edges'' block for each encoding. 
 
-\begin{figure}[h]
+\begin{figure}[!h]
 \figrule
 \begin{center}
 \begin{verbatim}
-%Generator
-{ hpath(X,Y) : link(X,Y) }:-node(X).
-{ hpath(X,Y) : link(X,Y) }:-node(Y).
+%Select edges
+{ hcyc(X,Y) : edge(X,Y) } :- node(X).
+{ hcyc(X,Y) : edge(X,Y) } :- node(Y).
 
-:- 2{ hpath(X,Y) : link(X,Y) },node(X).
-:- 2{ hpath(X,Y) : link(X,Y) },node(Y).
+:- 2{ hcyc(X,Y) : edge(X,Y) }, node(X).
+:- 2{ hcyc(X,Y) : edge(X,Y) }, node(Y).
 
-:- { hpath(X,Y) : link(X,Y) }0,node(X).
-:- { hpath(X,Y) : link(X,Y) }0,node(Y).
-
-%rule
-reach(1).
-reach(Y) :- reach(X),hpath(X,Y).
-
-%test
-:- not reach(X),node(X).
-
-%show
-#show hpath/2.
+:- { hcyc(X,Y) : edge(X,Y) }0, node(X).
+:- { hcyc(X,Y) : edge(X,Y) }0, node(Y).
 \end{verbatim}
 \end{center}
-\caption{Hamiltonian Cycle Encoding 1}\label{reachencod}
 \figrule
+\caption{``Select edges'' block in Encoding 1}\label{enc1}
 \end{figure}
-
-\begin{figure}[h]
+\begin{figure}[!h]
 \figrule
 \begin{center}
 \begin{verbatim}
-%Generator
-{ hpath(X,Y) : link(X,Y) } =1:-node(X).
-{ hpath(X,Y) : link(X,Y) } =1:-node(Y).
-
-%rule
-reach(X) :- hpath(1,X).
-reach(Y) :- reach(X),hpath(X,Y).
-
-%test
-:- not reach(X),node(X).
-
-%show
-#show hpath/2.
+%Select edges
+{ hcyc(X,Y) : edge(X,Y) } =1 :- node(X).
+{ hcyc(X,Y) : edge(X,Y) } =1 :- node(Y).
 \end{verbatim}
 \end{center}
-\caption{Hamiltonian Cycle Encoding 2}\label{reachencod}
 \figrule
+\caption{Hamiltonian Cycle Encoding 2}\label{enc2}
 \end{figure}
-
-\begin{figure}[h]
+\begin{figure}[!h]
 \figrule
 \begin{center}
 \begin{verbatim}
-%Generator
-{ hpath(X,Y) : link(X,Y) } 1:-node(X).
-{ hpath(X,Y) : link(X,Y) } 1:-node(Y).
-
-%rule
-reach(X) :- hpath(1,X).
-reach(Y) :- reach(X),hpath(X,Y).
-
-%test
-:- not reach(X),node(X).
-
-%show
-#show hpath/2.
-
-
+%Select edges
+{ hcyc(X,Y) : edge(X,Y) } 1 :-node(X).
+{ hcyc(X,Y) : edge(X,Y) } 1 :-node(Y).
 \end{verbatim}
 \end{center}
-\caption{Hamiltonian Cycle Encoding 3}\label{reachencod}
 \figrule
+\caption{Hamiltonian Cycle Encoding 3}\label{enc3}
 \end{figure}
-
-\begin{figure}[h]
+\begin{figure}
 \figrule
 \begin{center}
 \begin{verbatim}
-%Generator
-{ hpath(X,Y) : link(X,Y) } :-node(X).
-{ hpath(X,Y) : link(X,Y) } :-node(Y).
+%Select edges
+{ hcyc(X,Y) : edge(X,Y) } :- node(X).
+{ hcyc(X,Y) : edge(X,Y) } :- node(Y).
 
-:- 2{ hpath(X,Y) : link(X,Y) },node(X).
-:- 2{ hpath(X,Y) : link(X,Y) },node(Y).
+:- 2{ hcyc(X,Y) : edge(X,Y) }, node(X).
+:- 2{ hcyc(X,Y) : edge(X,Y) }, node(Y).
 
-:- { hpath(X,Y) : link(X,Y) }0,node(X).
-:- { hpath(X,Y) : link(X,Y) }0,node(Y).
-
-%rule
-reach(X) :- hpath(1,X).
-reach(Y) :- reach(X),hpath(X,Y).
-
-%test
-:- not reach(X),node(X).
-
-%show
-#show hpath/2.
-
+:- { hcyc(X,Y) : edge(X,Y) }0, node(X).
+:- { hcyc(X,Y) : edge(X,Y) }0, node(Y).
 \end{verbatim}
 \end{center}
-\caption{Hamiltonian Cycle Encoding 4}\label{reachencod}
 \figrule
+\caption{Hamiltonian Cycle Encoding 4}\label{enc4}
 \end{figure}
-
-\begin{figure}[h]
+\begin{figure}[!h]
 \figrule
 \begin{center}
 \begin{verbatim}
-%Generator
-{ hpath(X,Y) : link(X,Y) } :-node(X).
-{ hpath(X,Y) : link(X,Y) } :-node(Y).
+%Select edges
+{ hcyc(X,Y) : edge(X,Y) } :- node(X).
+{ hcyc(X,Y) : edge(X,Y) } :- node(Y).
 
-:- 2{ hpath(X,Y) : link(X,Y) },node(X).
-:- 2{ hpath(X,Y) : link(X,Y) },node(Y).
-
-%rule
-reach(X) :- hpath(1,X).
-reach(Y) :- reach(X),hpath(X,Y).
-
-%test
-:- not reach(X),node(X).
-
-%show
-#show hpath/2.
+:- 2{ hcyc(X,Y) : edge(X,Y) }, node(X).
+:- 2{ hcyc(X,Y) : edge(X,Y) }, node(Y).
 \end{verbatim}
 \end{center}
-\caption{Hamiltonian Cycle Encoding 5}\label{reachencod}
 \figrule
+\caption{Hamiltonian Cycle Encoding 5}\label{enc5}
 \end{figure}
-
-\begin{figure}[h]
+\begin{figure}[!h]
 \figrule
 \begin{center}
 \begin{verbatim}
-%Generator
-{ hpath(X,Y) : link(X,Y) }  =1:-node(X).
-{ hpath(X,Y) : link(X,Y) }  =1:-node(Y).
-
-%rule
-reach(1).
-reach(Y) :- reach(X),hpath(X,Y).
-
-%test
-:- not reach(X),node(X).
-
-%show
-#show hpath/2.
+%Select edges
+{ hcyc(X,Y) : edge(X,Y) } =1 :- node(X).
+{ hcyc(X,Y) : edge(X,Y) } =1 :- node(Y).
 \end{verbatim}
 \end{center}
-\caption{Hamiltonian Cycle Encoding 6}\label{reachencod}
 \figrule
+\caption{Hamiltonian Cycle Encoding 6}\label{enc6}
 \end{figure}
 
-\section{Instance features}
-In this appendix, we provide the graph features, \textit{claspre} static features, and \textit{claspre} dynamic features.
+\newpage
+\section*{Appendix B: Instance Features}\label{appB}
 
-\begin{table}[h]
-\caption{A list of graph features} \label{graphfeatures}
-\begin{tabular}{lll}
-num\_of\_nodes              & ratio\_of\_even\_out\_degree      & ratio\_degree\_less\_than\_3  \\
-num\_of\_edges              & num\_of\_odd\_in\_degree          & depth\_dfs\_1st\_backjump        \\
-ratio\_node\_edge           & ratio\_of\_odd\_in\_degree        & sum\_of\_choices\_along\_path \\
-bi\_edge                    & num\_of\_even\_in\_degree         & depth\_avg\_dfs\_backjump     \\
-ratio\_bi\_edge             & ratio\_of\_even\_in\_degree       & depth\_back\_to\_root         \\
-min\_out\_degree            & num\_of\_odd\_degree              & depth\_back\_to\_any          \\
-max\_out\_degree            & ratio\_of\_odd\_degree            & depth\_one\_path              \\
-avg\_out\_degree            & num\_of\_even\_degree             & min\_depth\_bfs               \\
-min\_in\_degree             & ratio\_of\_even\_degree           & max\_depth\_bfs               \\
-max\_in\_degree             & out\_degree\_less\_than\_3        & avg\_depth\_bfs               \\
-avg\_in\_degree             & ratio\_out\_degree\_less\_than\_3 & min\_depth\_beam              \\
-num\_of\_odd\_out\_degree   & in\_degree\_less\_than\_3         & max\_depth\_beam              \\
-ratio\_of\_odd\_out\_degree & ratio\_in\_degree\_less\_than\_3  & avg\_depth\_beam              \\
-num\_of\_even\_out\_degree  & degree\_less\_than\_3             &                              
-\end{tabular}
-\end{table}
+We considered the following 41 graph features and, as explained earlier, 
+selected selected 27 of them to the set of features to be used by learning 
+algorithms (cf. Table \ref{ecfeatures}).
 
-First, we give a description of all the graph features in Table \ref{graphfeatures}:\\
-num\_of\_nodes: the number of nodes in a graph\\
-ratio\_node\_edge: the number of edges in a grpah\\
-ratio\_node\_edge: the ratio of the number of node to the edge\\
-bi\_edge: the number of bidirectional edges\\
-ratio\_bi\_edge: the ratio of bidirectional edges over all edges\\
-min\_out\_degree: the mininum of outdegree of nodes\\
-max\_out\_degree: the maxinum of outdegree of nodes\\
-avg\_out\_degree: the average of outdegree of nodes\\
-min\_in\_degree: the mininum of indegree of nodes\\
-max\_in\_degree: the maxinum of indegree of nodes\\
-avg\_in\_degree: the average of indegree of nodes\\
-num\_of\_odd\_out\_degree: the number of nodes with odd outdegree\\
-ratio\_of\_odd\_out\_degree: the ratio of the number of nodes with odd outdegree over the total nodes\\
-num\_of\_even\_out\_degree: the number of nodes with even outdegree\\
-ratio\_of\_even\_out\_degree: the ratio of the number of nodes with even outdegree over the total nodes\\
-num\_of\_odd\_in\_degree: the number of nodes with odd indegree\\
-ratio\_of\_odd\_in\_degree: the ratio of the number of nodes with odd indegree over the total nodes\\
-num\_of\_even\_in\_degree: the number of nodes with even indegree\\
-ratio\_of\_even\_in\_degree: the ratio of the number of nodes with even indegree over the total nodes\\
-num\_of\_odd\_degree: the number of nodes with odd degree (in+out)\\
-ratio\_of\_odd\_degree: the ratio of the number of nodes with odd degree (in+out) over all nodes\\
-num\_of\_even\_degree: the number of nodes with even degree (in+out)\\
-ratio\_of\_even\_degree: the ratio of the number of nodes with even degree (in+out) over all nodes\\
-out\_degree\_less\_than\_3: the number of nodes with outdegree less than 3\\
-ratio\_out\_degree\_less\_than\_3: the ratio of the number of nodes with outdegree less than 3 over all nodes\\
-in\_degree\_less\_than\_3: the number of nodes with indegree less than 3\\
-ratio\_in\_degree\_less\_than\_3: the ratio of the number of nodes with indegree less than 3 over all nodes\\
-degree\_less\_than\_3: the number of nodes with degree(in+out) less than 3\\
-ratio\_degree\_less\_than\_3: the ratio of the number of nodes with degree(in+out) less than 3 over all nodes\\
-depth\_dfs\_1st\_backjump:Run DFS from node 1, return the depth of first backjump, where the algorithm discovers no new nodes.\\
-sum\_of\_choices\_along\_path: When depth\_dfs\_1st\_backjump, return the total number of choices of each discovered nodes along the DFS path.
-depth\_avg\_dfs\_backjump:Run DFS from node 1, return the average depth of all backjumps defined above.\\
-depth\_back\_to\_root: Run DFS from node 1, return the depth of a node that has back edge to node 1.\\
-depth\_back\_to\_any: Run DFS from node 1, return the depth of a node that has back edge to any discoverd node.\\
-depth\_one\_path: Run DFS from node 1, return the depth of first node with only one path, or one child.
-min\_depth\_bfs: Run BFS from node 1, record the depth of all the dead nodes, the node with no new nodes attached to it, and return the minimum.\\
-max\_depth\_bfs: Run BFS from node 1, record the depth of all the dead nodes and return the maxinum.\\
-avg\_depth\_bfs: Run BFS from node 1, record the depth of all the dead nodes and return the average.\\
-min\_depth\_beam: Run beam search, a two branches BFS search, from node 1, record the depth of all the dead nodes, the node with no new nodes attached to it, and return the minimum.\\
-max\_depth\_beam: Run beam search from node 1, record the depth of all the dead nodes and return the maxinum.\\
-avg\_depth\_beam: Run beam search from node 1, record the depth of all the dead nodes and return the average.
+%\begin{table}[!h]
+%\caption{A list of graph features} \label{graphfeatures}
+%\begin{tabular}{lll}
+%num\_of\_nodes              & ratio\_of\_even\_out\_degree      & ratio\_degree\_less\_than\_3  \\
+%num\_of\_edges              & num\_of\_odd\_in\_degree          & depth\_dfs\_1st\_backjump        \\
+%ratio\_node\_edge           & ratio\_of\_odd\_in\_degree        & sum\_of\_choices\_along\_path \\
+%bi\_edge                    & num\_of\_even\_in\_degree         & depth\_avg\_dfs\_backjump     \\
+%ratio\_bi\_edge             & ratio\_of\_even\_in\_degree       & depth\_back\_to\_root         \\
+%min\_out\_degree            & num\_of\_odd\_degree              & depth\_back\_to\_any          \\
+%max\_out\_degree            & ratio\_of\_odd\_degree            & depth\_one\_path              \\
+%avg\_out\_degree            & num\_of\_even\_degree             & min\_depth\_bfs               \\
+%min\_in\_degree             & ratio\_of\_even\_degree           & max\_depth\_bfs               \\
+%max\_in\_degree             & out\_degree\_less\_than\_3        & avg\_depth\_bfs               \\
+%avg\_in\_degree             & ratio\_out\_degree\_less\_than\_3 & min\_depth\_beam              \\
+%num\_of\_odd\_out\_degree   & in\_degree\_less\_than\_3         & max\_depth\_beam              \\
+%ratio\_of\_odd\_out\_degree & ratio\_in\_degree\_less\_than\_3  & avg\_depth\_beam              \\
+%num\_of\_even\_out\_degree  & degree\_less\_than\_3             &                              
+%\end{tabular}
+%\end{table}
 
-The \textit{claspre} features are extracted by combing \textit{claspre} with each HC encoding. As a result, there are six groups of static features(cf. Figure \ref{staticfeatures}) and dynamic features(cf. Figure \ref{dynamicfeatures}), one for each encoding. Please refer to \textit{claspre} \footnote{\url{https://potassco.org/labs/claspre/}} for more information about these features.
+\begin{description}
+\item[num\_of\_nodes:] the number of nodes in a graph
+\item[ratio\_node\_edge:] the number of edges in a grpah
+\item[ratio\_node\_edge:] the ratio of the number of node to the edge
+\item[bi\_edge:] the number of bidirectional edges
+\item[ratio\_bi\_edge:] the ratio of bidirectional edges over all edges
+\item[min\_out\_degree:] the mininum of outdegree of nodes
+\item[max\_out\_degree:] the maxinum of outdegree of nodes
+\item[avg\_out\_degree:] the average of outdegree of nodes
+\item[min\_in\_degree:] the mininum of indegree of nodes
+\item[max\_in\_degree:] the maxinum of indegree of nodes
+\item[avg\_in\_degree:] the average of indegree of nodes
+\item[num\_of\_odd\_out\_degree:] the number of nodes with odd outdegree
+\item[ratio\_of\_odd\_out\_degree:] the ratio of the number of nodes with odd outdegree over the total nodes
+\item[num\_of\_even\_out\_degree:] the number of nodes with even outdegree
+\item[ratio\_of\_even\_out\_degree:] the ratio of the number of nodes with even outdegree over the total nodes
+\item[num\_of\_odd\_in\_degree:] the number of nodes with odd indegree
+\item[ratio\_of\_odd\_in\_degree:] the ratio of the number of nodes with odd indegree over the total nodes
+\item[num\_of\_even\_in\_degree:] the number of nodes with even indegree
+\item[ratio\_of\_even\_in\_degree:] the ratio of the number of nodes with even indegree over the total nodes
+\item[num\_of\_odd\_degree:] the number of nodes with odd degree (in+out)
+\item[ratio\_of\_odd\_degree:] the ratio of the number of nodes with odd degree (in+out) over all nodes
+\item[num\_of\_even\_degree:] the number of nodes with even degree (in+out)
+\item[ratio\_of\_even\_degree:] the ratio of the number of nodes with even degree (in+out) over all nodes
+\item[out\_degree\_less\_than\_3:] the number of nodes with outdegree less than 3
+\item[ratio\_out\_degree\_less\_than\_3:] the ratio of the number of nodes with outdegree less than 3 over all nodes
+\item[in\_degree\_less\_than\_3:] the number of nodes with indegree less than 3
+\item[ratio\_in\_degree\_less\_than\_3:] the ratio of the number of nodes with indegree less than 3 over all nodes
+\item[degree\_less\_than\_3:] the number of nodes with degree(in+out) less than 3
+\item[ratio\_degree\_less\_than\_3:] the ratio of the number of nodes with degree(in+out) less than 3 over all nodes
+\item[depth\_dfs\_1st\_backjump:] Run DFS from node 1, return the depth of first backjump, where the algorithm discovers no new nodes
+\item[sum\_of\_choices\_along\_path:] When depth\_dfs\_1st\_backjump, return the total number of choices of each discovered nodes along the DFS path
+\item[depth\_avg\_dfs\_backjump:] Run DFS from node 1, return the average depth of all backjumps defined above
+\item[depth\_back\_to\_root:] Run DFS from node 1, return the depth of a node that has back edge to node 1
+\item[depth\_back\_to\_any:] Run DFS from node 1, return the depth of a node that has back edge to any discoverd node
+\item[depth\_one\_path:] Run DFS from node 1, return the depth of first node with only one path, or one child
+\item[min\_depth\_bfs:] Run BFS from node 1, record the depth of all the dead nodes, the node with no new nodes attached to it, and return the minimum
+\item[max\_depth\_bfs:] Run BFS from node 1, record the depth of all the dead nodes and return the maxinum
+\item[avg\_depth\_bfs:] Run BFS from node 1, record the depth of all the dead nodes and return the average
+\item[min\_depth\_beam:] Run beam search, a two branches BFS search, from node 1, record the depth of all the dead nodes, the node with no new nodes attached to it, and return the minimum
+\item[max\_depth\_beam:] Run beam search from node 1, record the depth of all the dead nodes and return the maxinum
+\item[avg\_depth\_beam:] Run beam search from node 1, record the depth of all the dead nodes and return the average
+\end{description}
+
+We also considered features extracted by running \textit{claspre} on each of 
+the six encodings. As a result, there are six groups of static and dynamic 
+features shown in Tables \ref{staticfeatures} and \ref{dynamicfeatures},
+respectively, one for each encoding. Features in each group for Encoding 
+$i$, $i=1,2,\ldots,6$, are denoted by the \textit{claspre} name appended 
+with the identifier of an encoding (for instance, Frac\_Neg\_Body\_Enc3). We 
+refer to \textit{claspre}\footnote{\url{https://potassco.org/labs/claspre/}}
+for more information about these features. We recall that our feature selection process resulted in 15 \textit{claspre} features selected for the set of 
+features we used in modeling, all of them obtained from running \textit{claspre}
+on Encoding 2, and all of them static (cf. Table \ref{ecfeatures}).
 
 
-\begin{table}[h]
+\begin{table}[!h]
 \caption{A list of claspre static features} \label{staticfeatures}
+\ \\
 \begin{tabular}{lll}
 Frac\_Neg\_Body              & Program\_Atoms            & Atom-Atom\_Equivalences       \\
 Frac\_Pos\_Body              & SCCS                      & Body-Body\_Equivalences       \\
@@ -981,8 +940,9 @@ Created\_Bodies              & Equivalences              &
 \end{tabular}
 \end{table}
 
-\begin{table}[h]
+\begin{table}[!h]
 \caption{A list of claspre dynamic features of one restart} \label{dynamicfeatures}
+\ \\
 \begin{tabular}{lll}
 Choices                         & Literals\_in\_Loop\_Nogoods           & Frac\_Learnt\_Ternary                    \\
 Conflicts/Choices               & Frac\_Literals\_in\_Conflict\_Nogoods & Frac\_Learnt\_Others                     \\
@@ -995,11 +955,6 @@ Frac\_Learnt\_from\_Loop        & Frac\_Removed\_Nogood                 &       
 Literals\_in\_Conflict\_Nogoods & Frac\_Learnt\_Binary                  &                                         
 \end{tabular}
 \end{table}
-
-\end{appendices}
-
-\newpage
-\bibliography{refs}
 
 \end{document}
 \begin{thebibliography}{}
