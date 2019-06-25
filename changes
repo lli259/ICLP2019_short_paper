@@ -14,26 +14,33 @@ using the learned performance predictors leads to significant performance gains.
     
   \end{abstract}
 
+  \begin{keywords}
+      \ Encoding Selection, Machine Learning, Answer Set Programming
+  \end{keywords}
+
+%\tableofcontents
 
 \section{Introduction}
 Answer Set Programming (ASP) \cite{BrewkaET11} has been shown to be especially 
 effective on 
 search and optimization problems whose decision versions are in the class NP, 
 including many problems of practical interest \cite{GebserMR17,ErdemGL16}. Despite the ease of modeling and the demonstrated potential of ASP, using it poses
-challenges. In particular, it is unlikely a single solver will emerge
-that would uniformly outperform all others. To address the problem, solver
+challenges. In particular, it is unlikely a single solver will emerge that 
+would uniformly outperform other solvers. Consequently, selecting a solver 
+for an instance may mean the difference between solving the problem within 
+an acceptable time and having the solver run ``forever.'' To address the 
+problem, solver
 selection, portfolio solving, and automated solver parameter configuration 
 have all been extensively studied \cite{Rice76,GomesS01,KerschkeHNT19,MarateaPR14,HoosLS14}.
-The key idea is to learn
+The key idea has been to learn
 instance-driven performance models and use them, given an instance, to
 select a solver (or a parameter configuration) that might perform well
 on that instance. 
 
-Another challenge is that of encoding selection. It suggests a different
-possibility for enhancing the effectiveness of ASP. It is well known that 
-problems have alternative equivalent encodings as answer set programs and 
-these encodings typically perform differently when run on different instances. 
-Consequently, one can seek program rewriting heuristics to generate better 
+Another challenge is selecting the right encoding. It is well known that 
+problems have alternative equivalent encodings as answer set programs. The 
+problem is that these encodings typically perform differently when run on 
+different instances. Consequently, one can seek program rewriting heuristics to generate better 
 performing programs, or develop methods for encoding selection and encoding 
 portfolio solving, similar to those used in portfolio solving. The first 
 idea has received some attention in recent years 
@@ -58,28 +65,30 @@ The HC problem has directed graphs as input instances. An instance is given
 by the lists of nodes and links (edges), represented as ground atoms over 
 a unary predicate $\tt{node}$ and a binary predicate $\tt{link}$. The code 
 below represents a directed graph with four nodes and six links.
-{\footnotesize \tt{
+
 \begin{lstlisting}
 node(1..4).
-link(1,2).link(1,3).link(2,1).link(3,4).link(4,2).link(4,3).
-\end{lstlisting}}}
+link(1,2).link(1,3).link(2,1).link(3,4).link(4,2),link(4,3).
+\end{lstlisting}
 
 The HC problem imposes constraints on a set of edges selected to form a 
 solution: there has to be exactly one edge leaving each node, exactly one edge
 entering each node, and every node must be \emph{reachable} from every other 
 node by a path of selected edges. These constraints can be modeled by program
 rules such as those below. 
-{\footnotesize \tt{
+
 \begin{lstlisting}
 %Select edges
-{ hcyc(X,Y) : link(X,Y) }=1 :- node(X).
-{ hcyc(X,Y) : link(X,Y) }=1 :- node(Y).
+{ hcyc(X,Y) : link(X,Y) }=1:-node(X).
+{ hcyc(X,Y) : link(X,Y) }=1:-node(Y).
+
 %Define reachability
-reach(X,Y) :- hcyc(X,Y).
+reach(X,Y):- hcyc(X,Y).
 reach(X,Z) :- reach(X,Y),hcyc(Y,Z).
+
 %Enforce reachability
 :- not reach(X,Y),node(X),node(Y).
-\end{lstlisting}}}
+\end{lstlisting}
 
 The first two rules model the constraints on the number of selected edges 
 (represented by a binary predicate {\tt hcyc}) leaving and entering each node. 
@@ -106,18 +115,17 @@ Table~\ref{encperform} summarizes the performance data for the six encodings
 on 784 hard instances (we comment later on how the instances were generated).
 The results on the number of wins, instances solved fastest by the encoding, 
 show that our encodings have complementary strengths. We observe that the 
-oracle, always selecting the fastest solver, solves about 98.0\%
+oracle always selecting the fastest solver solves about 98.0\%
 of all instances, an improvement of about 16\% over the best individual 
 encoding. This indicates that there is much room for intelligent encoding 
 selection methods to improve the performance of ASP on the HC problem.
 
 \begin{table}[]
-\centering
 	\caption{Performance of individual encodings and the oracle. 
 %We report percentage of solved instances, average runtime of the solved 
 %instances, and the number of wins.
 } \label{encperform}
-	\footnotesize{
+	
 	\begin{tabular}{llll}
 		\hline \hline
 		Encoding & Solved Percentage\% & Average Solved Runtime & Number of Wins\\
@@ -129,8 +137,8 @@ selection methods to improve the performance of ASP on the HC problem.
 		Encoding 6     & 77.4             & 47.7             & 151                 \\
 		Oracle   & 98.0            & 22.8              & \\
 		\hline \hline                
-	\end{tabular}}
-\centering	
+	\end{tabular}
+	
 \end{table}
 
 
@@ -150,11 +158,12 @@ such as satisfiability of $k$-CNF formulas, this is where hard problems are
 located \cite{SelmanML96}.} 
 
 To find classes of graphs for which the HC problem is not easily solved in ASP,
-we consider structured graphs (structure often is a source of hardness). 
-Starting with some highly structured graph that has a hamiltonian cycle, we remove edges at 
-random until the graph is no longer hamiltonian. In this work, we start the process with grid graphs shown in 
+we resorted to structured graphs (structure often is a source of hardness). To
+get a class of random graphs with structure, we can start with some highly 
+regular structured graph that has a hamiltonian cycle, and remove edges at 
+random. In this work, we started the process with grid graphs shown in 
 Figure~\ref{fig2}. We set their dimensions and ``hole'' locations so that to 
-guarantee the existence of a hamiltonian cycle. Our experiments demonstrate 
+guarantee the existence of a hamiltonian cycle. Our experiments demonstrated 
 that graphs with the number of edges in the phase transition region tend to 
 yield programs that often require hundreds or thousands of seconds, even 
 when the graphs have relatively few nodes (of the order of hundreds).
@@ -162,16 +171,15 @@ when the graphs have relatively few nodes (of the order of hundreds).
 To collect performance data, we generated a large collection of graphs. 
 Then we combined each graph with each of the six encodings, and ran 
 \emph{clasp/gringo}\footnote{\url{https://potassco.org}} on the resulting 
-programs. We set the cutoff time to 200s. 
-%When an instance timed out, we used the penalized runtime as an approximation 
-%of its real runtime, based on the number $k$ of encodings for which the 
-%instance timed out.
+programs. We set the cutoff time to 200s. When an instance timed out, we 
+used the penalized runtime as an approximation of its real runtime, computed 
+based on the number $k$ of encodings for which the instance timed out.
 %
 We then selected instances with runtime between 50s and 200s for at least one 
 encoding (not necessarily the same one). We call these instances 
 \emph{reasonably hard} (those that cannot be solved with any encoding in under 
 200s are too hard, and those that can be solved with each encoding in under 50s 
-are too easy). Finding reasonably hard instances turned out to be time 
+are too easy). Finding reasonably hard instances is time 
 consuming. Our experiments show that only a small fraction falls into this
 category (cf. Table \ref{fig3}). Thus, typically several graphs need to be 
 generated before a single reasonably hard instance is found. We used this 
@@ -181,36 +189,32 @@ can be downloaded from \url{http://cs.uky.edu/~lli259/encodingselection}}
 
 \begin{figure}
 \centering
-
-\begin{subfigure}
+\begin{subfigure}[t]{0.3\textwidth}
 \centering
-\includegraphics[width=0.15\textwidth]{gridins.png}
+\includegraphics[width=0.7\textwidth]{gridins.png}
 \end{subfigure}
-\begin{subfigure}
+\begin{subfigure}[t]{0.3\textwidth}
 \centering
-\includegraphics[ width=0.15\textwidth]{gridholeins.png}
+\includegraphics[ width=0.7\textwidth]{gridholeins.png}
 \end{subfigure}
-\begin{subfigure}
+\begin{subfigure}[t]{0.3\textwidth}
 \centering
-\includegraphics[ width=0.15\textwidth]{triangle.png}
+\includegraphics[ width=0.7\textwidth]{triangle.png}
 \end{subfigure}
 \caption{Structured instances: regular grid graph, regular grid graph with hole, regular triangular graph with cutting area }\label{fig2}
 \end{figure}
-
-
 
 
 \begin{table}[]
 \caption{Runtime distribution of Encoding 2 on 500 different instances that are gained through eliminating random edges from a regular square grid graph with length of its side 10.}\label{fig3}
 \label{fig3}
 \centering
-\footnotesize{
 \begin{tabular}{llll}
 	\hline\hline
 runtime & \textless{}50s & 50s $\sim$200s & 200s$\leq$ \\ 
 counts   & 330            & 52             & 118  \\ 
 	\hline\hline
-\end{tabular}}
+\end{tabular}
 \centering
 \end{table}
 
@@ -275,8 +279,7 @@ To evaluate a particular set of selected features, we randomly divide our data
 into the training set (80\%) and the test set (20\%), train models using the
 training set, and test the performance of encoding selection result on the
 test set. 
-%During the training process, we use the grid search to select proper 
-hyper-parameters. 
+%During the training process, we use the grid search to select proper hyper-parameters. 
 We partition training data into 10 bins and use 10-fold cross-validation
 to improve the generalization performance.
 The approach we described in this section results in a set of 42 features
@@ -288,16 +291,14 @@ used the greedy feature selection, our set of features may not be optimal and
 better selections may be possible.
 
 \begin{table}[]
-\caption{Selected instance features for encoding selection} \label{ecfeatures}    
+\caption{Selected instance features for encoding selection} \label{ecfeatures}                                           
 \centering
-{\footnotesize                             
-
 	\begin{tabular}{lll}
 		\hline\hline
 ratio\_node\_edge                 & avg\_depth\_beam              & Frac\_Binary\_Rules\_hc2          \\
 ratio\_bi\_edge                   & dfs\_1st\_back\_depth         & Frac\_Ternary\_Rules\_hc2         \\
 avg\_out\_degree                  & sum\_of\_choices\_along\_path & Free\_Problem\_Variables\_hc2     \\
-avg\_in\_degree                   & depth\_avg\_dfs\_backjump.    & Problem\_Variables\_hc2           \\
+avg\_in\_degree                   & depth\_avg\_dfs\_backjump    & Problem\_Variables\_hc2           \\
 ratio\_of\_odd\_out\_degree       & depth\_back\_to\_root         & Assigned\_Problem\_Variables\_hc2 \\
 ratio\_of\_even\_out\_degree      & depth\_back\_to\_any          & Constraints\_hc2                  \\
 ratio\_of\_odd\_in\_degree        & depth\_one\_path              & Rules\_hc2                        \\
@@ -310,7 +311,7 @@ ratio\_degree\_less\_than\_3      & avg\_depth\_beam              & Frac\_Ternar
 avg\_depth\_bfs                   & Frac\_Unary\_Rules\_hc2      & Frac\_Other\_Constraints\_hc2  \\
 \hline\hline
 	\end{tabular}
-	\centering}
+	\centering
 \end{table}
 
 \section{Experimentation}
@@ -322,9 +323,7 @@ Intel i7-7700 3.60GHz CPU and 16GB RAM, running under 64-bit 18.04.2 LTS
 \emph{clasp}\footnote{\url{https://potassco.org}} version
 3.3.2 with default parameter setting. The grounding tool 
 is \emph{gringo}\footnote{\url{https://potassco.org}} version 4.5.4. We choose 
-200 CPU seconds as 
-cutoff time. All runs that exceed the cutoff time were terminated and penalized 
-with the corresponding runtime (as explained above).
+200 CPU seconds as cutoff time. 
 
 %In the following, we present the results of encoding selection experiments 
 %we have performed on the HC problem. Table \ref{tab8} shows the performance of 
@@ -358,7 +357,6 @@ promising results in terms of the percentage of the solved instances.
 \begin{table}
 \caption{Test result of encoding selection experiment } \label{ecresult1}
 \centering
-\footnotesize{
 \begin{tabular}{llll}
 \hline\hline
 %
@@ -377,7 +375,7 @@ Encoding selection (KNN) & 92.9          & 40.2                    &            
 Encoding selection (DT) & 96.2&42.2       &               \\ %
 Encoding selection (RF) & 93.6&41.7	      &               \\ %
 \hline\hline
-\end{tabular}}
+\end{tabular}
 \centering
 \end{table}
 
